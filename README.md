@@ -25,13 +25,16 @@ Check online if your folder and file appeared in the repo
 Check for any updates of the repository with `git pull`. Check what did change in your local repository.
 
 ## Cheat sheets
-The following summaries are very helpful to take a glimpse on R markdown, git and other famous R packages
+The following summaries are very helpful to take a glimpse on R markdown, git and other famous R packages. Feel free to add further useful slides or posts.
+
 [Great git sheet with the most important commands to get started](https://rogerdudler.github.io/git-guide/files/git_cheat_sheet.pdf)
+
 [RMarkdown sheet1](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf)
+
 [RMarkdown sheet2](https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf)
+
 [ggplot2](https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf)
 
 ## KempaLab member peeps
-
 Christin - peep
 
