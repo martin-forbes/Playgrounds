@@ -37,6 +37,9 @@ The following summaries are very helpful to take a glimpse on R markdown, git an
 
 ## KempaLab member peeps
 Christin - peep
+
 Birte - peep
+
 Tobi  - peep
+
 Guido - peep
