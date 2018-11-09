@@ -39,3 +39,4 @@ The following summaries are very helpful to take a glimpse on R markdown, git an
 Christin - peep
 Birte - peep
 Tobi  - peep
+Guido - peep
