@@ -1,0 +1,170 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Nucleosides SRM analysis
+## Subtitle
+
+How to init a project activating code printed in the output and so on
+
+```{r init}
+#set path for figure export and size
+knitr::opts_chunk$set(fig.width = 7, fig.align = 'center', fig.height = 8, 
+                      fig.path = "figure/Plot-", 
+                      echo = TRUE,  #show R code
+                      warning = TRUE, #show warnings
+                      message = TRUE, #show messages
+                      eval = TRUE) 
+
+
+set_input = "20181102/" # what is this for? Aks Christin
+```
+
+```{r libraries}
+
+library(dplyr)
+library(ggplot2)
+
+```
+
+## Prepare data
+### Import data
+
+
+
+```{r import}
+
+# count the rows in the csv files to read (are the same in each one)
+csvrows = length(count.fields('input/Nu1.csv'))
+
+#get file names in the folder
+temp = list.files(path = "input/", pattern = "???.csv")
+
+#empty list 
+my_data <- list()
+
+#define column classes for the import
+my_colclasses = c("character", "character", "character", "character", "character", "numeric", "numeric", "numeric", "numeric", "numeric", "character","character", "character", "numeric", "character", "numeric", "character", "character")
+my_na.strings = c("NA", "NF","INF")
+
+#import files and save
+for (i in seq_along(temp)) {
+  
+  my_data[[i]] <- read.table(file = paste0('input/', temp[i]), 
+                           header = TRUE, 
+                           sep = ",", 
+                           quote = "\"", 
+                           dec = ".",  
+                           fill = TRUE, 
+                           colClasses = my_colclasses, #test
+                           na.strings = my_na.strings,
+                           comment.char = "",
+                           skip = 4, 
+                           nrows = csvrows - 11)
+}
+
+
+```
+
+```{r combine}
+
+#names(my_data) <- seq_along(temp)
+
+df <- bind_rows(my_data)
+
+
+```
+
+
+```{r add MW}
+# read MW of the nucleosides
+mw = read.table(file = paste0('input/', 'mw.txt'), header = TRUE)
+# add the MW to the table
+df <- merge(df, mw, by = 'Compound')
+# calculate the amount in fmol from the amount in pg
+df$fmol <- (df$Amount.1 / df$MW)*1000
+
+```
+
+### Clean-up data
+
+```{r cleanup}
+
+needed_col = c("Compound", 'Filename','fmol', 'Sample.ID')  #define the needed columns
+needed_row = c(df$Sample.Type == "Unknown Sample")  #define the needed rows
+
+df_reduced <- df[needed_row, needed_col]  #reduce the dataframe
+
+
+
+```
+
+### Add dilution factor
+
+```{r cleanup}
+# I should find the way to add this at the beginning, before ckeaning up the data. maybe based on the filename?
+# Xcalibur doesn;t provide any field to specify the dilution factor
+
+df_reduced$Dil.Factor = rep(c(100,10000),each = 3) # add dilution factor
+df_reduced$fmol.2 = df_reduced$fmol * df_reduced$Dil.Factor # calculate the real fmol amount according to the dilution factor
+
+#write the table
+write.csv(df_reduced, file = "df_reduced.csv", row.names = FALSE)
+
+```
+
+### Summarize table
+
+
+```{r cleanup}
+
+df_summary = df_reduced %>%
+  group_by(Compound, Sample.ID) %>%
+  summarise(mean = mean(fmol.2), sd = sd(fmol.2))
+
+#write the table
+write.csv(df_summary, file = "df_summary.csv", row.names = FALSE)
+
+```
+
+
+### Make graphs
+##### Unmodified nucleosides
+```{r make graphs}
+
+# remove the dilutions 100-fold and leave only the AGCU lines
+unmodified = filter(df_summary, c(grepl('10k', Sample.ID)))
+unmodified = filter(unmodified, grepl('Ade|Gua|Cyt|Uri', Compound))
+# leave only the samples relevant
+unmodified = filter(unmodified, !grepl('Extr|Col', Sample.ID))
+
+
+ggplot(unmodified, aes(y = mean, x=Sample.ID)) + 
+    geom_dotplot(binaxis = 'y') +
+    geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), col ='red', width = 0.1) +
+    coord_flip()+
+    facet_wrap(~Compound, scales = "free_y")
+
+```
+
+##### Modified nucleosides (Nu7, Nu8, Nu9, Nu19)
+```{r make graphs}
+
+# leave only the Nu7, Nu8, Nu9, Nu19 lines and remove teh 10k dilutions
+met_modified = filter(df_summary, grepl('Nu7|Nu8|Nu9|Nu19', Compound))
+met_modified = filter(met_modified, grepl('1to100', Sample.ID))
+
+# leave only the samples relevant
+met_modified = filter(met_modified, !grepl('Extr|Col', Sample.ID))
+
+
+ggplot(met_modified, aes(y = mean, x=Sample.ID)) + 
+    geom_dotplot(binaxis = 'y') +
+    geom_errorbar(aes(ymin = mean-sd, ymax = mean+sd), col ='red', width = 0.1) +
+    coord_flip()+
+    facet_wrap(~Compound, scales = "free_y")
+
+```
